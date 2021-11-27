@@ -71,7 +71,7 @@ welcome = """
                 
                     <div class="form-group">
                       <label for="Productname">
-                        Product Name
+                        Product Name 2
                       </label>
                       <input type="text"
                             class="form-control"
