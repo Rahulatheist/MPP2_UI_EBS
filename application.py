@@ -268,25 +268,36 @@ welcome = """
 """
 
 
-def application(environ, start_response):
-    path = environ['PATH_INFO']
-    method = environ['REQUEST_METHOD']
-    if method == 'POST':
-        try:
-            if path == '/':
-                request_body_size = int(environ['CONTENT_LENGTH'])
-                request_body = environ['wsgi.input'].read(request_body_size)
-                logger.info("Received message: %s" % request_body)
-            elif path == '/scheduled':
-                logger.info("Received task %s scheduled at %s", environ['HTTP_X_AWS_SQSD_TASKNAME'],
-                            environ['HTTP_X_AWS_SQSD_SCHEDULED_AT'])
-        except (TypeError, ValueError):
-            logger.warning('Error retrieving request body for async work.')
-        response = ''
-    else:
-        response = welcome
-    start_response("200 OK", [
-        ("Content-Type", "text/html"),
-        ("Content-Length", str(len(response)))
-    ])
-    return [bytes(response, 'utf-8')]
+from flask import Flask
+
+# print a nice greeting.
+def say_hello(username = "World"):
+    return '<p>Hello %s!</p>\n' % username
+
+# some bits of text for the page.
+header_text = '''
+    <html>\n<head> <title>EB Flask Test</title> </head>\n<body>'''
+instructions = '''
+    <p><em>Hint</em>: This is a RESTful web service! Append a username
+    to the URL (for example: <code>/Thelonious</code>) to say hello to
+    someone specific.</p>\n'''
+home_link = '<p><a href="/">Back</a></p>\n'
+footer_text = '</body>\n</html>'
+
+# EB looks for an 'application' callable by default.
+application = Flask(__name__)
+
+# add a rule for the index page.
+application.add_url_rule('/', 'index', welcome)
+
+# add a rule when the page is accessed with a name appended to the site
+# URL.
+application.add_url_rule('/<username>', 'hello', (lambda username:
+    header_text + say_hello(username) + home_link + footer_text))
+
+# run the app.
+if __name__ == "__main__":
+    # Setting debug to True enables debug output. This line should be
+    # removed before deploying a production app.
+    application.debug = True
+    application.run()
